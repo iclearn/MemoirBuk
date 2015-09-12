@@ -32,9 +32,6 @@ public class fullScreen extends Activity implements MediaPlayerControl {
 
     private void setController(){
         controller = new RecordingController(this, false);
-        if(controller == null){
-            Log.i(TAG,"it is null");
-        }
         controller.setMediaPlayer(this);
         controller.setAnchorView(findViewById(R.id.fullImage));
         controller.setEnabled(true);
@@ -51,6 +48,8 @@ public class fullScreen extends Activity implements MediaPlayerControl {
     }
 
     public int getCurrentPosition(){
+        if (mp != null)
+        return mp.getCurrentPosition();
         return 0;
     }
 
@@ -85,8 +84,14 @@ public class fullScreen extends Activity implements MediaPlayerControl {
             if(recording != ""){
                 mp.setDataSource(recording);
                 mp.prepare();
+                mp.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
+                    @Override
+                    public void onPrepared(MediaPlayer mp) {
+                        controller.show();
+                    }
+                });
                 mp.start();
-                controller.show(999999990);
+                //controller.show(999999990);
             }
             else
                 Toast.makeText(this, "No recording for Image", Toast.LENGTH_LONG).show();
@@ -96,12 +101,15 @@ public class fullScreen extends Activity implements MediaPlayerControl {
 
     }
 
+
+    public void onSeekComplete(MediaPlayer mp){
+        mp.start();
+    }
+
     @Override
     public void pause() {
         if(mp != null){
             mp.pause();
-            mp.release();
-            mp = null;
         }
 
     }
@@ -110,7 +118,9 @@ public class fullScreen extends Activity implements MediaPlayerControl {
     @Override
     public int getDuration() {
         if(mp != null)
-        return mp.getDuration();
+        {
+            return mp.getDuration();
+        }
         return 0;
     }
 
@@ -122,6 +132,7 @@ public class fullScreen extends Activity implements MediaPlayerControl {
         Intent intent = getIntent();
         ImageView imageView = (ImageView)findViewById(R.id.fullImage);
 
+
         path = intent.getStringExtra("path");
         recording = intent.getStringExtra("recording");
         //int width = imageView.getWidth();
@@ -129,10 +140,8 @@ public class fullScreen extends Activity implements MediaPlayerControl {
         // load image in async task
         loadImage li = new loadImage();
         li.execute(path);
-        start();
+       // start();
     }
-
-
 
     public class loadImage extends AsyncTask<String, Void, Bitmap>{
         @Override
@@ -144,7 +153,7 @@ public class fullScreen extends Activity implements MediaPlayerControl {
         protected void onPostExecute(Bitmap b){
             ImageView imageView = (ImageView)findViewById(R.id.fullImage);
             imageView.setImageBitmap(b);
-
+            start();
         }
 
     }
