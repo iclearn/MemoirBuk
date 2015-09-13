@@ -65,6 +65,7 @@ public class fullScreen extends Activity implements MediaPlayerControl {
     public void seekTo(int a){
         if(mp != null){
             mp.seekTo(a);
+            mp.start();
         }
     }
 
@@ -90,6 +91,10 @@ public class fullScreen extends Activity implements MediaPlayerControl {
                         controller.show();
                     }
                 });
+                if(pos != 0){
+                    mp.seekTo(pos);
+                }
+                mp.setLooping(true);
                 mp.start();
                 //controller.show(999999990);
             }
@@ -101,17 +106,16 @@ public class fullScreen extends Activity implements MediaPlayerControl {
 
     }
 
-
-    public void onSeekComplete(MediaPlayer mp){
-        mp.start();
-    }
+    int pos = 0;
 
     @Override
     public void pause() {
         if(mp != null){
-            mp.pause();
+            if(mp.isPlaying()){
+                pos = getCurrentPosition();
+                mp.pause();
+            }
         }
-
     }
 
 
@@ -142,6 +146,17 @@ public class fullScreen extends Activity implements MediaPlayerControl {
         li.execute(path);
        // start();
     }
+
+    @Override
+    protected void onPause(){
+        super.onPause();
+        if(mp != null)
+        if(this.isFinishing()){
+            pause();
+            mp.release();
+        }
+    }
+
 
     public class loadImage extends AsyncTask<String, Void, Bitmap>{
         @Override
