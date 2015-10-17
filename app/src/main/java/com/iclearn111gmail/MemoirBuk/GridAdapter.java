@@ -72,7 +72,7 @@ public class GridAdapter extends BaseAdapter {
 
     // view for a single image
 
-    private class ViewHolder{
+    public class ViewHolder{
         ImageView imageView;
         TextView caption;
     }
@@ -81,7 +81,6 @@ public class GridAdapter extends BaseAdapter {
     public View getView(int position, View convertView, ViewGroup parent){
         final String[] image = (String[]) getItem(position);
         LinearLayout view = (LinearLayout) convertView;
-       // Log.i(TAG, "getview called" + position);
         final ViewHolder vH;
 
         if(view == null){
@@ -93,6 +92,9 @@ public class GridAdapter extends BaseAdapter {
             vH.caption = (TextView) view.findViewById(R.id.caption);
             vH.imageView.setScaleType(ImageView.ScaleType.CENTER_CROP);
             vH.imageView.setPadding(8, 8, 8, 8);
+
+            // set tag as the path
+            vH.imageView.setTag(image[0]);
             view.setOrientation(LinearLayout.VERTICAL);
             view.setLayoutParams(new GridView.LayoutParams(GridView.LayoutParams.FILL_PARENT, GridView.LayoutParams.FILL_PARENT));
             view.setTag(vH);

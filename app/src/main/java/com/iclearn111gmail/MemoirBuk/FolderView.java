@@ -20,6 +20,7 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.AdapterView;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.GridView;
@@ -28,6 +29,7 @@ import android.widget.Toast;
 import java.io.File;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 
 // to be used for inside folder view
@@ -39,12 +41,12 @@ public class FolderView extends Activity {
     private SQLiteDatabase dbw;
     private SQLiteDatabase dbr;
     private MediaRecorder mediaRecorder = null;
-    private MediaPlayer mediaPlayer = null;
     Intent intent;
     String iconPath, folderName, recordingPath, caption;
 
     String TAG = "MemoirBuk";
     File image;
+    ArrayList<Uri> imageUris = new ArrayList<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -73,13 +75,48 @@ public class FolderView extends Activity {
 
         // TODO: add a gesture listener for short click, long click, and pinching
 
-        GridView gridView = (GridView) findViewById(R.id.gridview);
+        final GridView gridView = (GridView) findViewById(R.id.gridview);
 
         mAdapter = new GridAdapter(this);
         gridView.setAdapter(mAdapter);
+
+        // on item click listener
+        gridView.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
+            @Override
+            public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
+                // add to selected list
+                Uri uri = Uri.parse(((GridAdapter.ViewHolder) view.getTag()).imageView.getTag().toString());
+                // set a toggle for clicks
+                if(imageUris.contains(uri)){
+                    imageUris.remove(uri);
+                }
+                else{
+                    imageUris.add(uri);
+                }
+                // set a onclicklistener for other items now
+                gridView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+                    @Override
+                    public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                        // add to selected list
+                        Uri uri = Uri.parse(((GridAdapter.ViewHolder) view.getTag()).imageView.getTag().toString());
+                        // set a toggle for clicks
+                        if(imageUris.contains(uri)){
+                            imageUris.remove(uri);
+                            //view.setAlpha((float)0.75);todo: more on this
+                        }
+                        else{
+                            imageUris.add(uri);
+                        }
+                    }
+                });
+                // set onitemclicklistener to null when share button is pressed
+                // change the appearance a bit
+                return false;
+            }
+        });
     }
 
-    @Override
+    /*@Override
     protected void onRestoreInstanceState(Bundle savedState){
         Log.i(TAG, "onr restore instance state");
         super.onRestoreInstanceState(savedState);
@@ -93,7 +130,7 @@ public class FolderView extends Activity {
         super.onSaveInstanceState(outState);
         outState.putString("foldername", folderName);
         outState.putString("iconPath", iconPath);
-    }
+    }*/
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -121,9 +158,23 @@ public class FolderView extends Activity {
                 return true;
             case R.id.delete_all:
                 delete();
+            case R.id.share:
+                share();
                 return true;
         }
+
         return super.onOptionsItemSelected(item);
+    }
+
+    protected void share(){
+        GridView gridView = (GridView) findViewById(R.id.gridview);
+        gridView.setOnItemClickListener(null);
+        // intent to share
+        Intent shareIntent = new Intent();
+        shareIntent.setAction(Intent.ACTION_SEND_MULTIPLE);
+        shareIntent.putParcelableArrayListExtra(Intent.EXTRA_STREAM, imageUris);
+        shareIntent.setType("image/*");
+        startActivity(shareIntent);
     }
 
     protected void delete(){
@@ -276,7 +327,7 @@ public class FolderView extends Activity {
 
         dialog1.show();
 
-    };
+    }
 
     private class sqlDatabaseTaskWrite extends AsyncTask<Void, Void, Boolean>{
 
@@ -368,7 +419,7 @@ public class FolderView extends Activity {
                             String recPath1 = c.getString(c.getColumnIndexOrThrow(selfieDB.selfieDB_main.RECORDING_PATH));
                             String caption1 = c.getString(c.getColumnIndexOrThrow(selfieDB.selfieDB_main.CAPTION));
                             final String[] args = {path1, caption1, recPath1};
-                            if(path1 != null);
+                            if(path1 != null)
                             mAdapter.add(args);
                         }
                     }

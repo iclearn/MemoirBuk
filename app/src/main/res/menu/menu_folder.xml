@@ -9,4 +9,8 @@
         android:icon="@android:drawable/ic_menu_camera" />
     <item android:id="@+id/delete_all"
         android:title="Clear All"/>
+    <item android:id="@+id/share"
+        android:title="Share"
+        android:icon="@android:drawable/ic_menu_share"
+        android:showAsAction="always" />
 </menu>

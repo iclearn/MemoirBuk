@@ -13,7 +13,6 @@ import android.util.Log;
 import android.widget.ImageView;
 
 import java.io.IOException;
-import java.util.logging.Handler;
 import java.util.logging.LogRecord;
 
 import android.widget.MediaController.MediaPlayerControl;
@@ -49,6 +48,7 @@ public class fullScreen extends Activity implements MediaPlayerControl {
 
     public int getCurrentPosition(){
         if (mp != null)
+        if(mp.isPlaying())
         return mp.getCurrentPosition();
         return 0;
     }
@@ -63,7 +63,8 @@ public class fullScreen extends Activity implements MediaPlayerControl {
     }
 
     public void seekTo(int a){
-        if(mp != null){
+        if(mp != null)
+            if(mp.isPlaying()){
             mp.seekTo(a);
             mp.start();
         }
@@ -71,7 +72,7 @@ public class fullScreen extends Activity implements MediaPlayerControl {
 
     @Override
     public boolean isPlaying() {
-        return mp.isPlaying();
+        return mp != null && mp.isPlaying();
     }
 
     @Override
@@ -80,21 +81,26 @@ public class fullScreen extends Activity implements MediaPlayerControl {
     }
 
     public void start(){
-        mp = new MediaPlayer();
+        mp = new MediaPlayer();// error handling todo
         try {
-            if(recording != ""){
+            if(recording.equals("")){
                 mp.setDataSource(recording);
                 mp.prepare();
                 mp.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
                     @Override
                     public void onPrepared(MediaPlayer mp) {
-                        controller.show();
+                        try{
+                            controller.show();
+                        }catch (Exception e){
+                            e.printStackTrace();
+                        }
+
                     }
                 });
                 if(pos != 0){
                     mp.seekTo(pos);
                 }
-                mp.setLooping(true);
+                mp.setLooping(false);
                 mp.start();
                 //controller.show(999999990);
             }
@@ -122,6 +128,7 @@ public class fullScreen extends Activity implements MediaPlayerControl {
     @Override
     public int getDuration() {
         if(mp != null)
+            if(mp.isPlaying())
         {
             return mp.getDuration();
         }
@@ -148,13 +155,33 @@ public class fullScreen extends Activity implements MediaPlayerControl {
     }
 
     @Override
+    protected void onRestart(){
+        setController();
+        super.onResume();
+    }
+
+    @Override
     protected void onPause(){
-        super.onPause();
         if(mp != null)
-        if(this.isFinishing()){
-            pause();
+        //if(mp.isPlaying())
+        //if(this.isFinishing())
+        {
+            controller.hide();
+            mp.stop();
             mp.release();
+            mp = null;
         }
+        super.onPause();
+    }
+
+    @Override
+    public void onBackPressed(){
+        this.finish();
+        controller.hide();
+        mp.stop();
+        mp.release();
+        mp = null;
+        super.onBackPressed();
     }
 
 

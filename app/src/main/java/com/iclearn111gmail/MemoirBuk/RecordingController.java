@@ -1,6 +1,8 @@
 package com.iclearn111gmail.MemoirBuk;
 
+import android.app.Activity;
 import android.content.Context;
+import android.view.KeyEvent;
 import android.widget.MediaController;
 
 /**
@@ -13,5 +15,16 @@ public class RecordingController extends MediaController {
     }
 
     public void hide(){}
+
+    @Override
+    public boolean dispatchKeyEvent(KeyEvent event) {
+        int keyCode = event.getKeyCode();
+        if(keyCode == KeyEvent.KEYCODE_BACK){
+            Context c = getContext();
+            ((Activity)c).finish();
+            return true;
+        }
+        return super.dispatchKeyEvent(event);
+    }
 
 }
