@@ -46,7 +46,7 @@ public class FolderView extends Activity {
 
     String TAG = "MemoirBuk";
     File image;
-    ArrayList<Uri> imageUris = new ArrayList<>();
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -80,40 +80,7 @@ public class FolderView extends Activity {
         mAdapter = new GridAdapter(this);
         gridView.setAdapter(mAdapter);
 
-        // on item click listener
-        gridView.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
-            @Override
-            public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
-                // add to selected list
-                Uri uri = Uri.parse(((GridAdapter.ViewHolder) view.getTag()).imageView.getTag().toString());
-                // set a toggle for clicks
-                if(imageUris.contains(uri)){
-                    imageUris.remove(uri);
-                }
-                else{
-                    imageUris.add(uri);
-                }
-                // set a onclicklistener for other items now
-                gridView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-                    @Override
-                    public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                        // add to selected list
-                        Uri uri = Uri.parse(((GridAdapter.ViewHolder) view.getTag()).imageView.getTag().toString());
-                        // set a toggle for clicks
-                        if(imageUris.contains(uri)){
-                            imageUris.remove(uri);
-                            //view.setAlpha((float)0.75);todo: more on this
-                        }
-                        else{
-                            imageUris.add(uri);
-                        }
-                    }
-                });
-                // set onitemclicklistener to null when share button is pressed
-                // change the appearance a bit
-                return false;
-            }
-        });
+
     }
 
     /*@Override
@@ -172,9 +139,11 @@ public class FolderView extends Activity {
         // intent to share
         Intent shareIntent = new Intent();
         shareIntent.setAction(Intent.ACTION_SEND_MULTIPLE);
-        shareIntent.putParcelableArrayListExtra(Intent.EXTRA_STREAM, imageUris);
-        shareIntent.setType("image/*");
+        shareIntent.putParcelableArrayListExtra(Intent.EXTRA_STREAM, mAdapter.imageUris);
+        shareIntent.setType("image/png");
         startActivity(shareIntent);
+        mAdapter.selectionMode[0] = false;
+        mAdapter.imageUris.clear();
     }
 
     protected void delete(){

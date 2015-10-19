@@ -83,7 +83,7 @@ public class fullScreen extends Activity implements MediaPlayerControl {
     public void start(){
         mp = new MediaPlayer();// error handling todo
         try {
-            if(recording.equals("")){
+            if(!recording.equals("")){
                 mp.setDataSource(recording);
                 mp.prepare();
                 mp.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {

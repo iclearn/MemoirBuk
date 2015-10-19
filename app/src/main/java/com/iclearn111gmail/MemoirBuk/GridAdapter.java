@@ -6,6 +6,7 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Matrix;
 import android.media.ExifInterface;
+import android.net.Uri;
 import android.os.AsyncTask;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -18,6 +19,7 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -34,9 +36,12 @@ public class GridAdapter extends BaseAdapter {
     private final List<String[]> myImages = new ArrayList<String[]>();
     private final Context mContext;
     private final String TAG = "debug";
+    public boolean[] selectionMode = new boolean[1];
+    public ArrayList<Uri> imageUris = new ArrayList<>();
 
     public GridAdapter(Context context){
         mContext = context;
+        selectionMode[0] = false;
     }
 
     // add an image to the grid adapter
@@ -157,23 +162,60 @@ public class GridAdapter extends BaseAdapter {
                     intent.putExtra("folderName", image[1]);
                     mContext.startActivity(intent);
                 } else if (image.length == 3) {
-                    // open fullscreen view
-                    // intent to start another activity with a larger view
-                    Intent intent = new Intent(mContext, fullScreen.class);
-                    intent.putExtra("path", image[0]);
+                    // todo check mode if selection mode run different code
+                    if(selectionMode[0]){
+                        Uri uri = Uri.fromFile(new File(((GridAdapter.ViewHolder) v.getTag()).imageView.getTag().toString()));
+                        if(imageUris.contains(uri)){
+                            imageUris.remove(uri);
+                        }
+                        else{
+                            imageUris.add(uri);
+                        }
+                    }
+                    else{
+                        // open fullscreen view
+                        // intent to start another activity with a larger view
+                        Intent intent = new Intent(mContext, fullScreen.class);
+                        intent.putExtra("path", image[0]);
 
-                    // todo: put the description as well
-                    intent.putExtra("descr", image[1]);
-                    // if recording there, put it too
-                    intent.putExtra("recording", image[2]);
-                    mContext.startActivity(intent);
+                        // put the description as well
+                        intent.putExtra("descr", image[1]);
+                        // if recording there, put it too
+                        intent.putExtra("recording", image[2]);
+                        mContext.startActivity(intent);
+                    }
+
                 }
             }
         });
 
+        if(image.length == 3){
+
+            view.setOnLongClickListener(new View.OnLongClickListener() {
+                @Override
+                public boolean onLongClick(View v) {
+                    // add to selected list
+                    Uri uri = Uri.fromFile(new File(((GridAdapter.ViewHolder) v.getTag()).imageView.getTag().toString()));
+                    // set a toggle for clicks
+                    Log.i(TAG,"long clicked");
+                    if(imageUris.contains(uri)){
+                        imageUris.remove(uri);
+                    }
+                    else{
+                        imageUris.add(uri);
+                    }
+                    // set selection mode
+                    selectionMode[0] = true;
+
+                    return true;
+                }
+            });
+        }
+
         return view;
 
     }
+
 
 
 
