@@ -8,6 +8,8 @@ import android.database.sqlite.SQLiteOpenHelper;
  * Created by ssquasar on 16/7/15.
  */
 public class selfieDBHelper extends SQLiteOpenHelper {
+    SQLiteDatabase dbw;
+
     private static final String SQL_CREATE_IMAGE_TABLE = "CREATE TABLE " + selfieDB.selfieDB_main.TABLE_NAME + " (" + selfieDB.selfieDB_main._ID
             + " INTEGER PRIMARY KEY, " +
             selfieDB.selfieDB_main.FOLDER_NAME + " TEXT, " +
@@ -22,9 +24,16 @@ public class selfieDBHelper extends SQLiteOpenHelper {
             selfieDB.selfieDB_folders.CREATION_DATE + " TEXT, " +
             selfieDB.selfieDB_folders.ICON_PATH + " TEXT" +
             " )";
+    private static final String SQL_CREATE_VIDEOS_TABLE = "CREATE TABLE " + selfieDB.selfieDB_videos.VIDEO_TABLE + " (" +
+            selfieDB.selfieDB_videos._ID + " INTEGER PRIMARY KEY , " +
+            selfieDB.selfieDB_videos.VIDEO_NAME + " TEXT, " +
+            selfieDB.selfieDB_videos.CREATION_DATE + " TEXT , " +
+            selfieDB.selfieDB_videos.ICON_PATH + " TEXT , " +
+            selfieDB.selfieDB_videos.VIDEO_PATH + " TEXT )";
 
     private static final String SQL_DELETE_ENTRIES = "DROP TABLE IF EXISTS " + selfieDB.selfieDB_main.TABLE_NAME;
     private static final String SQL_DELETE_FOLDERS_TABLE = "DROP TABLE IF EXISTS " + selfieDB.selfieDB_folders.FOLDER_TABLE;
+    private static final String SQL_DELETE_VIDEOS_TABLE = "DROP TABLE IF EXISTS " + selfieDB.selfieDB_videos.VIDEO_TABLE;
 
     private static final String SQL_DELETE_ROWS = "DELETE FROM " + selfieDB.selfieDB_main.TABLE_NAME;
 
@@ -42,15 +51,19 @@ public class selfieDBHelper extends SQLiteOpenHelper {
     public void onCreate(SQLiteDatabase db){
         db.execSQL(SQL_CREATE_FOLDERS_TABLE);
         db.execSQL(SQL_CREATE_IMAGE_TABLE);
+        db.execSQL(SQL_CREATE_VIDEOS_TABLE);
     }
 
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion){
         db.execSQL(SQL_DELETE_FOLDERS_TABLE);
         db.execSQL(SQL_DELETE_ENTRIES);
+        db.execSQL(SQL_DELETE_VIDEOS_TABLE);
         onCreate(db);
     }
 
     public void onDowngrade(SQLiteDatabase db, int oldVersion, int newVersion){
         onUpgrade(db, oldVersion, newVersion);
     }
+
+
 }

@@ -4,6 +4,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Color;
 import android.graphics.Matrix;
 import android.media.ExifInterface;
 import android.net.Uri;
@@ -12,7 +13,6 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.AbsListView;
 import android.widget.BaseAdapter;
 import android.widget.GridView;
 import android.widget.ImageView;
@@ -37,7 +37,10 @@ public class GridAdapter extends BaseAdapter {
     private final Context mContext;
     private final String TAG = "debug";
     public boolean[] selectionMode = new boolean[1];
+    public ArrayList<String> imagePaths = new ArrayList<>();
+    public ArrayList<String> recordingPaths = new ArrayList<>();
     public ArrayList<Uri> imageUris = new ArrayList<>();
+    public ArrayList<String> imageNames = new ArrayList<>();
 
     public GridAdapter(Context context){
         mContext = context;
@@ -76,7 +79,6 @@ public class GridAdapter extends BaseAdapter {
     }
 
     // view for a single image
-
     public class ViewHolder{
         ImageView imageView;
         TextView caption;
@@ -99,22 +101,24 @@ public class GridAdapter extends BaseAdapter {
             vH.imageView.setPadding(8, 8, 8, 8);
 
             // set tag as the path
-            vH.imageView.setTag(image[0]);
             view.setOrientation(LinearLayout.VERTICAL);
-            view.setLayoutParams(new GridView.LayoutParams(GridView.LayoutParams.FILL_PARENT, GridView.LayoutParams.FILL_PARENT));
+            view.setLayoutParams(new GridView.LayoutParams(GridView.AUTO_FIT, 300));
             view.setTag(vH);
 
         }
         else
         vH = (ViewHolder) view.getTag();
 
-
+        vH.imageView.setTag(R.id.image,image[0]);
+        if(image.length == 3)
+        vH.imageView.setTag(R.id.record,image[2]); // holds the video path in case of videos
         vH.caption.setText(image[1]);
+        vH.imageView.setTag(R.id.name, image[1]);
 
         class AttachBitmap extends AsyncTask<String, Void, Bitmap>{
             @Override
             protected Bitmap doInBackground(String ... p){
-                Bitmap bitmap = decodeSampledBitmapFromUri(p[0], 150, 150);
+                Bitmap bitmap = decodeSampledBitmapFromUri(p[0], 300, 300);
                 try{
 
                     ExifInterface ef = new ExifInterface(p[0].toString());
@@ -126,6 +130,12 @@ public class GridAdapter extends BaseAdapter {
                         case ExifInterface.ORIENTATION_ROTATE_180:
                             bitmap = rotateImage(bitmap, 180);
                             break;
+                        case ExifInterface.ORIENTATION_ROTATE_270:
+                            bitmap = rotateImage(bitmap, 270);
+                            break;
+                        case ExifInterface.ORIENTATION_NORMAL:
+                        default:
+
                     }
                 }
                 catch (IOException ie){
@@ -153,26 +163,50 @@ public class GridAdapter extends BaseAdapter {
             @Override
             public void onClick(View v) {
                 // length of string array to determine which activity to call
-                if (image.length == 2) {
+                if (image.length == 4) {
+                    // intent to play the video
+                    Intent intent = new Intent(Intent.ACTION_VIEW);
+                    Uri uri = Uri.parse(image[0]);// check this if video does not play
+                    intent.setDataAndType(uri, "video/*");
+                    mContext.startActivity(intent);
+                } else if (image.length == 2) {
+                    if (image[1] == "Videos") {
+                        Intent intent = new Intent(mContext, Videos.class);
+                        intent.putExtra("iconPath", image[0]);
+                        //intent.putExtra("", )
+                        mContext.startActivity(intent);
+                    }
                     // open folder view
                     // intent to start another activity with a folder view
-                    Intent intent = new Intent(mContext, FolderView.class);
-                    intent.putExtra("iconPath", image[0]);
-                    // put the folder name as well
-                    intent.putExtra("folderName", image[1]);
-                    mContext.startActivity(intent);
-                } else if (image.length == 3) {
-                    // todo check mode if selection mode run different code
-                    if(selectionMode[0]){
-                        Uri uri = Uri.fromFile(new File(((GridAdapter.ViewHolder) v.getTag()).imageView.getTag().toString()));
-                        if(imageUris.contains(uri)){
-                            imageUris.remove(uri);
-                        }
-                        else{
-                            imageUris.add(uri);
-                        }
+                    else {
+                        Intent intent = new Intent(mContext, FolderView.class);
+                        intent.putExtra("iconPath", image[0]);
+                        // put the folder name as well
+                        intent.putExtra("folderName", image[1]);
+                        mContext.startActivity(intent);
+
                     }
-                    else{
+                } else if (image.length == 3) {
+                    String path1 = ((GridAdapter.ViewHolder) v.getTag()).imageView.getTag(R.id.image).toString();
+                    String path2 = ((GridAdapter.ViewHolder) v.getTag()).imageView.getTag(R.id.record).toString();
+                    String name = ((GridAdapter.ViewHolder) v.getTag()).imageView.getTag(R.id.name).toString();
+                    // todo check mode if selection mode run different code
+                    if (selectionMode[0]) {
+                        Uri uri = Uri.fromFile(new File(path1));
+                        if (imageUris.contains(uri)) {
+                            imageUris.remove(uri);
+                            imagePaths.remove(path1);
+                            recordingPaths.remove(path2);
+                            imageNames.remove(name);
+                            v.setBackgroundColor(Color.TRANSPARENT);
+                        } else {
+                            imageUris.add(uri);
+                            imagePaths.add(path1);
+                            recordingPaths.add(path2);
+                            imageNames.add(name);
+                            v.setBackgroundColor(Color.GRAY);
+                        }
+                    } else {
                         // open fullscreen view
                         // intent to start another activity with a larger view
                         Intent intent = new Intent(mContext, fullScreen.class);
@@ -194,15 +228,26 @@ public class GridAdapter extends BaseAdapter {
             view.setOnLongClickListener(new View.OnLongClickListener() {
                 @Override
                 public boolean onLongClick(View v) {
+                    String path1 = ((GridAdapter.ViewHolder) v.getTag()).imageView.getTag(R.id.image).toString();
+                    String path2 = ((GridAdapter.ViewHolder) v.getTag()).imageView.getTag(R.id.record).toString();
+                    String name  = ((GridAdapter.ViewHolder) v.getTag()).imageView.getTag(R.id.name).toString();
                     // add to selected list
-                    Uri uri = Uri.fromFile(new File(((GridAdapter.ViewHolder) v.getTag()).imageView.getTag().toString()));
+                    Uri uri = Uri.fromFile(new File(path1));
                     // set a toggle for clicks
                     Log.i(TAG,"long clicked");
                     if(imageUris.contains(uri)){
                         imageUris.remove(uri);
+                        imagePaths.remove(path1);
+                        recordingPaths.remove(path2);
+                        imageNames.remove(name);
+                        v.setBackgroundColor(Color.TRANSPARENT);
                     }
                     else{
                         imageUris.add(uri);
+                        imagePaths.add(path1);
+                        recordingPaths.add(path2);
+                        imageNames.add(name);
+                        v.setBackgroundColor(Color.GRAY);
                     }
                     // set selection mode
                     selectionMode[0] = true;
@@ -211,6 +256,8 @@ public class GridAdapter extends BaseAdapter {
                 }
             });
         }
+
+
 
         return view;
 
@@ -254,14 +301,12 @@ public class GridAdapter extends BaseAdapter {
             if (width > height) {
                 inSampleSize = Math.round((float) height
                         / (float) reqHeight);
-            } else {
+            }
+            else if(height > width){
                 inSampleSize = Math.round((float) width / (float) reqWidth);
             }
         }
 
         return inSampleSize;
     }
-
-
-
 }

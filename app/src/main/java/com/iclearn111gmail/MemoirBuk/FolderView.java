@@ -2,25 +2,22 @@ package com.iclearn111gmail.MemoirBuk;
 
 import android.app.Activity;
 import android.app.AlertDialog;
-import android.app.Dialog;
 import android.content.ContentValues;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.res.Configuration;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
-import android.media.MediaPlayer;
 import android.media.MediaRecorder;
 import android.net.Uri;
-import android.nfc.Tag;
 import android.os.AsyncTask;
+import android.os.Bundle;
 import android.os.Environment;
 import android.provider.MediaStore;
-import android.os.Bundle;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.widget.AdapterView;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.GridView;
@@ -29,28 +26,31 @@ import android.widget.Toast;
 import java.io.File;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.Date;
 
 // to be used for inside folder view
 
 public class FolderView extends Activity {
 
-    private GridAdapter mAdapter;
+    public GridAdapter mAdapter;
     private selfieDBHelper mDBHelper;
     private SQLiteDatabase dbw;
     private SQLiteDatabase dbr;
     private MediaRecorder mediaRecorder = null;
     Intent intent;
     String iconPath, folderName, recordingPath, caption;
+    public static String IMAGE_NAMES = "image-names";
+    public static String IMAGE_PATHS = "image-paths";
+    public static String RECORDING_PATHS = "recording-paths";
 
     String TAG = "MemoirBuk";
     File image;
+    int SET = 0001;
+    int CAMERA_REQUEST = 0002;
 
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        Log.i(TAG, "on create called");
         super.onCreate(savedInstanceState);
         setTheme(android.R.style.Theme_Holo);
         setContentView(R.layout.activity_main);
@@ -65,7 +65,7 @@ public class FolderView extends Activity {
 
         }
 
-        // set title foldername
+        // set title folder name
 
         mDBHelper = new selfieDBHelper(this);
 
@@ -83,7 +83,7 @@ public class FolderView extends Activity {
 
     }
 
-    /*@Override
+    @Override
     protected void onRestoreInstanceState(Bundle savedState){
         Log.i(TAG, "onr restore instance state");
         super.onRestoreInstanceState(savedState);
@@ -97,7 +97,12 @@ public class FolderView extends Activity {
         super.onSaveInstanceState(outState);
         outState.putString("foldername", folderName);
         outState.putString("iconPath", iconPath);
-    }*/
+    }
+
+    @Override
+    public void onConfigurationChanged(Configuration newConfig) {
+        super.onConfigurationChanged(newConfig);
+    }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -125,12 +130,27 @@ public class FolderView extends Activity {
                 return true;
             case R.id.delete_all:
                 delete();
+                return true;
             case R.id.share:
                 share();
+                return true;
+            case R.id.video:
+                shareVideo();
                 return true;
         }
 
         return super.onOptionsItemSelected(item);
+    }
+
+    protected void shareVideo(){
+        // activity for custom settings
+        Intent settings = new Intent(this, video_settings.class);
+        settings.putStringArrayListExtra(IMAGE_NAMES, mAdapter.imageNames);
+        settings.putStringArrayListExtra(IMAGE_PATHS, mAdapter.imagePaths);
+        settings.putStringArrayListExtra(RECORDING_PATHS, mAdapter.recordingPaths);
+        startActivityForResult(settings, SET);
+
+        return;
     }
 
     protected void share(){
@@ -144,6 +164,8 @@ public class FolderView extends Activity {
         startActivity(shareIntent);
         mAdapter.selectionMode[0] = false;
         mAdapter.imageUris.clear();
+        mAdapter.recordingPaths.clear();
+        mAdapter.imagePaths.clear();
     }
 
     protected void delete(){
@@ -156,7 +178,6 @@ public class FolderView extends Activity {
     }
 
     protected void camera(){
-        int CAMERA_REQUEST = 1234;
         Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
         String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
 
@@ -189,36 +210,40 @@ public class FolderView extends Activity {
 
         // description alert box
         // taking input for the folder name
-        AlertDialog.Builder alert1 = new AlertDialog.Builder(this);
+        if(requestCode == CAMERA_REQUEST && resultCode == RESULT_OK){
 
-        alert1.setTitle("Caption");
-        alert1.setMessage("Give your memories some words");
+            AlertDialog.Builder alert1 = new AlertDialog.Builder(this, R.style.Theme_Transparent);
 
-        // Set an EditText view to get user input
-        final EditText input = new EditText(this);
-        alert1.setView(input);
+            alert1.setTitle("Caption");
+            alert1.setMessage("Give your memories some words");
 
-        alert1.setPositiveButton("Ok", new DialogInterface.OnClickListener() {
-            public void onClick(DialogInterface dialog, int whichButton) {
-                caption = input.getText().toString();
-                callAlert();
-            }
-        });
+            // Set an EditText view to get user input
+            final EditText input = new EditText(this);
+            alert1.setView(input);
 
-        alert1.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
-            public void onClick(DialogInterface dialog, int whichButton) {
-                // Canceled.
-                caption = "";
-                callAlert();
-            }
-        });
+            alert1.setPositiveButton("Ok", new DialogInterface.OnClickListener() {
+                public void onClick(DialogInterface dialog, int whichButton) {
+                    caption = input.getText().toString();
+                    callAlert();
+                }
+            });
 
-        alert1.show();
+            alert1.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+                public void onClick(DialogInterface dialog, int whichButton) {
+                    // Canceled.
+                    caption = "";
+                    callAlert();
+                }
+            });
+
+            alert1.show();
+        }
+
     }
 
 
     private void callAlert(){
-        final AlertDialog.Builder alertBuilder2 = new AlertDialog.Builder(this);
+        final AlertDialog.Builder alertBuilder2 = new AlertDialog.Builder(this, R.style.Theme_Transparent);
         alertBuilder2.setTitle("Recording");
         alertBuilder2.setMessage("Do you want to start recording?");
 
@@ -272,6 +297,7 @@ public class FolderView extends Activity {
 
                         mediaRecorder.start();
                         b2.setText("Stop");
+                        b1.setClickable(false);
 
                     }
                 });

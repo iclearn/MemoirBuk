@@ -25,4 +25,13 @@ public class selfieDB {
         public static final String CREATION_DATE = "creation_date";
         public static final String ICON_PATH = "icon_path";
     }
+
+    // table for videos
+    public static abstract class selfieDB_videos implements BaseColumns{
+        public static final String VIDEO_TABLE = "video_table";
+        public static final String VIDEO_NAME = "video_name";
+        public static final String CREATION_DATE = "creation_date";
+        public static final String ICON_PATH = "icon_path";
+        public static final String VIDEO_PATH = "video_path";
+    }
 }

@@ -2,6 +2,7 @@ package com.iclearn111gmail.MemoirBuk;
 
 import android.app.Activity;
 import android.content.Intent;
+import android.content.res.Configuration;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Matrix;
@@ -11,12 +12,10 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.util.Log;
 import android.widget.ImageView;
-
-import java.io.IOException;
-import java.util.logging.LogRecord;
-
 import android.widget.MediaController.MediaPlayerControl;
 import android.widget.Toast;
+
+import java.io.IOException;
 
 /**
  * Created by ssquasar on 25/7/15.
@@ -158,6 +157,11 @@ public class fullScreen extends Activity implements MediaPlayerControl {
     protected void onRestart(){
         setController();
         super.onResume();
+    }
+
+    @Override
+    public void onConfigurationChanged(Configuration newConfig) {
+        super.onConfigurationChanged(newConfig);
     }
 
     @Override

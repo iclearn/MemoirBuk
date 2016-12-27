@@ -13,4 +13,7 @@
         android:title="Share"
         android:icon="@android:drawable/ic_menu_share"
         android:showAsAction="always" />
+    <item android:id="@+id/video"
+        android:title="Share a video"
+        android:showAsAction="always" />
 </menu>

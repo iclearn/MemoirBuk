@@ -4,11 +4,11 @@ import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.ContentValues;
 import android.content.DialogInterface;
+import android.content.res.Configuration;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.EditText;
@@ -23,7 +23,7 @@ import java.util.Date;
 
 public class MainActivity extends Activity {
 
-    private GridAdapter mAdapter;
+    public static GridAdapter mAdapter;
     private selfieDBHelper mDBHelper; 
     private SQLiteDatabase dbw;
     private SQLiteDatabase dbr;
@@ -57,6 +57,11 @@ public class MainActivity extends Activity {
     }
 
     @Override
+    public void onConfigurationChanged(Configuration newConfig) {
+        super.onConfigurationChanged(newConfig);
+    }
+
+    @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.main_menu, menu);
@@ -85,7 +90,8 @@ public class MainActivity extends Activity {
     private void createFolder(){
 
         // taking input for the folder name
-        AlertDialog.Builder alert = new AlertDialog.Builder(this);
+        AlertDialog.Builder alert = new AlertDialog.Builder(this, R.style.Theme_Transparent);
+
 
         alert.setTitle("Folder Name");
         alert.setMessage("What would you like to name this folder?");
@@ -145,10 +151,10 @@ public class MainActivity extends Activity {
 
             if(i == -1){
                 // error
-                Toast.makeText(MainActivity.this, "Folder could not be created :(", Toast.LENGTH_LONG).show();
+                Toast.makeText(MainActivity.this, "Folder could not be created :(", Toast.LENGTH_SHORT).show();
             }
             else{
-                Toast.makeText(MainActivity.this, "Folder: " + " created", Toast.LENGTH_LONG).show();
+                Toast.makeText(MainActivity.this, "Folder: " + " created", Toast.LENGTH_SHORT).show();
                 // make string array of icon path and folder name and add it to the adapter
                 String[] item = {"default", b};
                 mAdapter.add(item);
